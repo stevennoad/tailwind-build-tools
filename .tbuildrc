@@ -1,0 +1,4 @@
+# Default project paths for tbuild
+TAILWIND_INPUT="./Core/css/tailwind.css"
+CSS_DIR="./public/assets/css"
+HTML_FILE="./views/partials/head.php"
