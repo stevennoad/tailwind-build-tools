@@ -98,6 +98,42 @@ EOL
 				echo "Tailwind CSS: ${tailwind_version:-unknown}"
 				echo "CSS file: ${css_file:-none}"
 
+		# --- UPDATE COMMANDS ---
+		elif [ "$cmd" = "update" ]; then
+				subcmd="$2"
+
+				if [ "$subcmd" = "tailwind" ]; then
+						echo "Checking latest TailwindCSS release..."
+
+						# Fetch latest release URL for Linux x64
+						latest_url=$(curl -s https://api.github.com/repos/tailwindlabs/tailwindcss/releases/latest \
+								| grep "browser_download_url.*tailwindcss-linux-x64\"" \
+								| head -n 1 \
+								| cut -d '"' -f 4)
+
+						if [ -z "$latest_url" ]; then
+								echo "Failed to fetch latest Tailwind release."
+								return 1
+						fi
+
+						echo "Downloading: $latest_url"
+						curl -L -o tailwindcss-linux-x64 "$latest_url" || { echo "Download failed."; return 1; }
+
+						# Backup current binary if exists
+						if [ -f "./tailwindcss" ]; then
+								mv ./tailwindcss ./tailwindcss.bak
+								echo "Existing tailwindcss → tailwindcss.bak"
+						fi
+
+						# Replace with new binary
+						mv tailwindcss-linux-x64 tailwindcss
+						chmod 755 tailwindcss
+						echo "Tailwind updated successfully."
+
+				else
+						echo "Invalid update target. Try: tbuild update tailwind"
+				fi
+
 		# --- HELP ---
 		elif [ "$cmd" = "help" ]; then
 				echo -e "Usage: tbuild [command]\n"
@@ -106,6 +142,7 @@ EOL
 				echo -e "\033[38;2;59;130;246mdev:     \033[0mRun Tailwind in dev mode (watch, same file)."
 				echo -e "\033[38;2;59;130;246mbuild:   \033[0mBuild + minify with new date filename, keep previous backup."
 				echo -e "\033[38;2;59;130;246mversion: \033[0mShow tbuild version and Tailwind CSS file info."
+				echo -e "\033[38;2;59;130;246mupdate tailwind: \033[0mDownload and install the latest TailwindCSS Linux binary."
 				echo -e "\033[38;2;59;130;246mhelp:    \033[0mShow this help message.\n"
 
 		else
