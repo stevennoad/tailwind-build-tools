@@ -72,7 +72,7 @@ EOL
 
 				echo "Updating backup..."
 				if [ -f "$CSS_DIR/$current_css" ]; then
-						cp "$CSS_DIR/$current_css" "$CSS_DIR/$current_css.bak"
+						mv "$CSS_DIR/$current_css" "$CSS_DIR/$current_css.bak"
 						echo "Backed up current CSS → $current_css.bak"
 				fi
 
