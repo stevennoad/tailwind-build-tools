@@ -1,5 +1,5 @@
 # Define tbuild version
-TBUILD_VERSION="v1.0.0"
+TBUILD_VERSION="v1.1.0"
 
 tbuild() {
 		bashrc_file="$HOME/.bashrc"
