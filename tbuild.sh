@@ -1,5 +1,5 @@
 # Define tbuild version
-TBUILD_VERSION="v1.0.0"
+TBUILD_VERSION="v1.1.0"
 
 tbuild() {
 		bashrc_file="$HOME/.bashrc"
@@ -100,39 +100,65 @@ EOL
 
 		# --- UPDATE COMMANDS ---
 		elif [ "$cmd" = "update" ]; then
-				subcmd="$2"
+		echo "Select what you want to update:"
+		PS3="Enter number: "
+		options=("tbuild" "tailwind" "Cancel")
+		select opt in "${options[@]}"; do
+				case $opt in
+						"tbuild")
+								echo "You are about to update tbuild itself."
+								read -p "Continue? [y/N]: " confirm
+								confirm=${confirm,,}
+								if [[ "$confirm" != "y" && "$confirm" != "yes" ]]; then
+										echo "Update cancelled."
+										break
+								fi
 
-				if [ "$subcmd" = "tailwind" ]; then
-						echo "Checking latest TailwindCSS release..."
+								echo "Checking latest tbuild release..."
+								latest_url=$(curl -s https://api.github.com/repos/stevennoad/tailwind-build-tools/releases/latest \
+										| grep "browser_download_url.*tbuild.sh\"" \
+										| head -n1 \
+										| cut -d '"' -f 4)
 
-						# Fetch latest release URL for Linux x64
-						latest_url=$(curl -s https://api.github.com/repos/tailwindlabs/tailwindcss/releases/latest \
-								| grep "browser_download_url.*tailwindcss-linux-x64\"" \
-								| head -n 1 \
-								| cut -d '"' -f 4)
+								[ -z "$latest_url" ] && { echo "Failed to fetch latest tbuild release."; break; }
 
-						if [ -z "$latest_url" ]; then
-								echo "Failed to fetch latest Tailwind release."
-								return 1
-						fi
+								echo "Downloading latest tbuild..."
+								curl -L -o tbuild.sh.new "$latest_url" || { echo "Download failed."; break; }
 
-						echo "Downloading: $latest_url"
-						curl -L -o tailwindcss-linux-x64 "$latest_url" || { echo "Download failed."; return 1; }
+								mv tbuild.sh tbuild.sh.bak
+								mv tbuild.sh.new tbuild.sh
+								chmod 755 tbuild.sh
+								echo "tbuild updated successfully (old version → tbuild.sh.bak)"
+								break
+								;;
+						"tailwind")
+								echo "Checking latest TailwindCSS release..."
+								latest_url=$(curl -s https://api.github.com/repos/tailwindlabs/tailwindcss/releases/latest \
+										| grep "browser_download_url.*tailwindcss-linux-x64\"" \
+										| head -n1 \
+										| cut -d '"' -f 4)
 
-						# Backup current binary if exists
-						if [ -f "./tailwindcss" ]; then
-								mv ./tailwindcss ./tailwindcss.bak
-								echo "Existing tailwindcss → tailwindcss.bak"
-						fi
+								[ -z "$latest_url" ] && { echo "Failed to fetch latest Tailwind release."; break; }
 
-						# Replace with new binary
-						mv tailwindcss-linux-x64 tailwindcss
-						chmod 755 tailwindcss
-						echo "Tailwind updated successfully."
+								echo "Downloading: $latest_url"
+								curl -L -o tailwindcss-linux-x64 "$latest_url" || { echo "Download failed."; break; }
 
-				else
-						echo "Invalid update target. Try: tbuild update tailwind"
-				fi
+								[ -f "./tailwindcss" ] && mv ./tailwindcss ./tailwindcss.bak && echo "Existing tailwindcss → tailwindcss.bak"
+
+								mv tailwindcss-linux-x64 tailwindcss
+								chmod 755 tailwindcss
+								echo "Tailwind updated successfully."
+								break
+								;;
+						"Cancel")
+								echo "Update cancelled."
+								break
+								;;
+						*)
+								echo "Invalid option. Please select a number from the list."
+								;;
+				esac
+		done
 
 		# --- HELP ---
 		elif [ "$cmd" = "help" ]; then
@@ -142,7 +168,7 @@ EOL
 				echo -e "\033[38;2;59;130;246mdev:     \033[0mRun Tailwind in dev mode (watch, same file)."
 				echo -e "\033[38;2;59;130;246mbuild:   \033[0mBuild + minify with new date filename, keep previous backup."
 				echo -e "\033[38;2;59;130;246mversion: \033[0mShow tbuild version and Tailwind CSS file info."
-				echo -e "\033[38;2;59;130;246mupdate tailwind: \033[0mDownload and install the latest TailwindCSS Linux binary."
+				echo -e "\033[38;2;59;130;246mupdate: \033[0mDownload and install the latest version of tbuild or tailwind."
 				echo -e "\033[38;2;59;130;246mhelp:    \033[0mShow this help message.\n"
 
 		else
